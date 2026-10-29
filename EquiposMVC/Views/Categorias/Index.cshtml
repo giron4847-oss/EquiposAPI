@@ -1,0 +1,20 @@
+@model List<EquiposMVC.Models.CategoriaItem>
+@{ ViewData["Title"] = "Categorías"; }
+<h2>Categorías</h2>
+<p><a class="btn btn-primary" asp-action="Create">Nueva categoría</a></p>
+<table class="table table-striped">
+    <thead><tr><th>Id</th><th>Nombre</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var c in Model)
+    {
+        <tr>
+            <td>@c.Id</td>
+            <td>@c.Nombre</td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@c.Id">Editar</a>
+                <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@c.Id">Eliminar</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

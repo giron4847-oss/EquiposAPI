@@ -11,81 +11,153 @@ GO
 BEGIN TRANSACTION;
 GO
 
-CREATE TABLE [Categorias] (
-    [Id] int NOT NULL IDENTITY,
-    [Nombre] nvarchar(100) NOT NULL,
-    CONSTRAINT [PK_Categorias] PRIMARY KEY ([Id])
-);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [Categorias] (
+        [Id] int NOT NULL IDENTITY,
+        [Nombre] nvarchar(100) NOT NULL,
+        CONSTRAINT [PK_Categorias] PRIMARY KEY ([Id])
+    );
+END;
 GO
 
-CREATE TABLE [Usuarios] (
-    [Id] int NOT NULL IDENTITY,
-    [Username] nvarchar(50) NOT NULL,
-    [PasswordHash] nvarchar(max) NOT NULL,
-    [Email] nvarchar(150) NOT NULL,
-    [Rol] nvarchar(20) NOT NULL,
-    CONSTRAINT [PK_Usuarios] PRIMARY KEY ([Id])
-);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [Usuarios] (
+        [Id] int NOT NULL IDENTITY,
+        [Username] nvarchar(50) NOT NULL,
+        [PasswordHash] nvarchar(max) NOT NULL,
+        [Email] nvarchar(150) NOT NULL,
+        [Rol] nvarchar(20) NOT NULL,
+        CONSTRAINT [PK_Usuarios] PRIMARY KEY ([Id])
+    );
+END;
 GO
 
-CREATE TABLE [Equipos] (
-    [Id] int NOT NULL IDENTITY,
-    [CodigoInventario] nvarchar(50) NOT NULL,
-    [Nombre] nvarchar(150) NOT NULL,
-    [Descripcion] nvarchar(max) NULL,
-    [CategoriaId] int NOT NULL,
-    [Estado] nvarchar(20) NOT NULL,
-    [RowVersion] rowversion NOT NULL,
-    CONSTRAINT [PK_Equipos] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Equipos_Categorias_CategoriaId] FOREIGN KEY ([CategoriaId]) REFERENCES [Categorias] ([Id]) ON DELETE NO ACTION
-);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [Equipos] (
+        [Id] int NOT NULL IDENTITY,
+        [CodigoInventario] nvarchar(50) NOT NULL,
+        [Nombre] nvarchar(150) NOT NULL,
+        [Descripcion] nvarchar(max) NULL,
+        [CategoriaId] int NOT NULL,
+        [Estado] nvarchar(20) NOT NULL,
+        [RowVersion] rowversion NOT NULL,
+        CONSTRAINT [PK_Equipos] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Equipos_Categorias_CategoriaId] FOREIGN KEY ([CategoriaId]) REFERENCES [Categorias] ([Id]) ON DELETE NO ACTION
+    );
+END;
 GO
 
-CREATE TABLE [Prestamos] (
-    [Id] int NOT NULL IDENTITY,
-    [EquipoId] int NOT NULL,
-    [UsuarioId] int NOT NULL,
-    [FechaPrestamo] datetime2 NOT NULL,
-    [FechaVencimiento] datetime2 NOT NULL,
-    [FechaDevolucion] datetime2 NULL,
-    [Observaciones] nvarchar(max) NULL,
-    CONSTRAINT [PK_Prestamos] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Prestamos_Equipos_EquipoId] FOREIGN KEY ([EquipoId]) REFERENCES [Equipos] ([Id]) ON DELETE NO ACTION,
-    CONSTRAINT [FK_Prestamos_Usuarios_UsuarioId] FOREIGN KEY ([UsuarioId]) REFERENCES [Usuarios] ([Id]) ON DELETE NO ACTION
-);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [Prestamos] (
+        [Id] int NOT NULL IDENTITY,
+        [EquipoId] int NOT NULL,
+        [UsuarioId] int NOT NULL,
+        [FechaPrestamo] datetime2 NOT NULL,
+        [FechaVencimiento] datetime2 NOT NULL,
+        [FechaDevolucion] datetime2 NULL,
+        [Observaciones] nvarchar(max) NULL,
+        CONSTRAINT [PK_Prestamos] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Prestamos_Equipos_EquipoId] FOREIGN KEY ([EquipoId]) REFERENCES [Equipos] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_Prestamos_Usuarios_UsuarioId] FOREIGN KEY ([UsuarioId]) REFERENCES [Usuarios] ([Id]) ON DELETE NO ACTION
+    );
+END;
 GO
 
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Nombre') AND [object_id] = OBJECT_ID(N'[Categorias]'))
-    SET IDENTITY_INSERT [Categorias] ON;
-INSERT INTO [Categorias] ([Id], [Nombre])
-VALUES (1, N'Laptops'),
-(2, N'Proyectores'),
-(3, N'Kits IoT'),
-(4, N'Tarjetas Arduino');
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Nombre') AND [object_id] = OBJECT_ID(N'[Categorias]'))
-    SET IDENTITY_INSERT [Categorias] OFF;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Nombre') AND [object_id] = OBJECT_ID(N'[Categorias]'))
+        SET IDENTITY_INSERT [Categorias] ON;
+    EXEC(N'INSERT INTO [Categorias] ([Id], [Nombre])
+    VALUES (1, N''Laptops''),
+    (2, N''Proyectores''),
+    (3, N''Kits IoT''),
+    (4, N''Tarjetas Arduino'')');
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Nombre') AND [object_id] = OBJECT_ID(N'[Categorias]'))
+        SET IDENTITY_INSERT [Categorias] OFF;
+END;
 GO
 
-CREATE UNIQUE INDEX [IX_Categorias_Nombre] ON [Categorias] ([Nombre]);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_Categorias_Nombre] ON [Categorias] ([Nombre]);
+END;
 GO
 
-CREATE INDEX [IX_Equipos_CategoriaId] ON [Equipos] ([CategoriaId]);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_Equipos_CategoriaId] ON [Equipos] ([CategoriaId]);
+END;
 GO
 
-CREATE UNIQUE INDEX [IX_Equipos_CodigoInventario] ON [Equipos] ([CodigoInventario]);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_Equipos_CodigoInventario] ON [Equipos] ([CodigoInventario]);
+END;
 GO
 
-CREATE INDEX [IX_Prestamos_EquipoId] ON [Prestamos] ([EquipoId]);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_Prestamos_EquipoId] ON [Prestamos] ([EquipoId]);
+END;
 GO
 
-CREATE INDEX [IX_Prestamos_UsuarioId] ON [Prestamos] ([UsuarioId]);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_Prestamos_UsuarioId] ON [Prestamos] ([UsuarioId]);
+END;
 GO
 
-CREATE UNIQUE INDEX [IX_Usuarios_Username] ON [Usuarios] ([Username]);
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_Usuarios_Username] ON [Usuarios] ([Username]);
+END;
 GO
 
-INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20261028031212_InitialCreate', N'8.0.11');
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261028031212_InitialCreate'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261028031212_InitialCreate', N'8.0.11');
+END;
 GO
 
 COMMIT;

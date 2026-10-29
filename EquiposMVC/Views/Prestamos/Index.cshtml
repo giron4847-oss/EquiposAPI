@@ -1,0 +1,71 @@
+﻿@model EquiposMVC.Models.PrestamosIndexViewModel
+@{
+    ViewData["Title"] = "Préstamos";
+    var gestiona = Model.Rol != "Estudiante";
+}
+
+<h2 class="mb-3">@(Model.Rol == "Estudiante" ? "Mis préstamos" : "Préstamos")</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="mb-3">
+    @if (gestiona)
+    {
+        <a asp-action="Create" class="btn btn-success">Nuevo préstamo</a>
+    }
+    @if (Model.SoloVencidos)
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Ver todos</a>
+    }
+    else
+    {
+        <a asp-action="Index" asp-route-soloVencidos="true" class="btn btn-outline-danger">Solo vencidos</a>
+    }
+</div>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Equipo</th>
+            @if (gestiona)
+            {
+                <th>Usuario</th>
+            }
+            <th>Préstamo</th>
+            <th>Vence</th>
+            <th>Devolución</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model.Items)
+        {
+            <tr class="@(p.EstaVencido ? "table-danger" : "")">
+                <td>@p.EquipoCodigoInventario - @p.EquipoNombre</td>
+                @if (gestiona)
+                {
+                    <td>@p.UsuarioUsername</td>
+                }
+                <td>@p.FechaPrestamo.ToString("dd/MM/yyyy")</td>
+                <td>@p.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                <td>@(p.FechaDevolucion?.ToString("dd/MM/yyyy") ?? "Pendiente")</td>
+                <td>
+                    @if (gestiona && p.FechaDevolucion == null)
+                    {
+                        <form asp-action="Devolver" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@p.Id" />
+                            <button class="btn btn-sm btn-primary">Devolver</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (!Model.Items.Any())
+        {
+            <tr><td colspan="6" class="text-center text-muted">No hay préstamos para mostrar.</td></tr>
+        }
+    </tbody>
+</table>

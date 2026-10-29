@@ -1,0 +1,88 @@
+@model EquiposMVC.Models.EquiposIndexViewModel
+@{
+    ViewData["Title"] = "Equipos";
+    var esAdmin = Model.Rol == "Admin";
+    var esEstudiante = Model.Rol == "Estudiante";
+}
+<h2>@(esEstudiante ? "Equipos disponibles" : "Equipos")</h2>
+
+@if (esAdmin)
+{
+    <p><a class="btn btn-primary" asp-action="Create">Nuevo equipo</a></p>
+}
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="text" name="texto" value="@Model.Texto" class="form-control" placeholder="Buscar por texto" />
+    </div>
+    <div class="col-md-3">
+        <select name="categoriaId" class="form-select">
+            <option value="">Todas las categorías</option>
+            @foreach (var c in Model.Categorias)
+            {
+                <option value="@c.Id" selected="@(Model.CategoriaId == c.Id)">@c.Nombre</option>
+            }
+        </select>
+    </div>
+    @if (!esEstudiante)
+    {
+        <div class="col-md-3">
+            <select name="estado" class="form-select">
+                <option value="">Todos los estados</option>
+                @foreach (var e in new[] { "Disponible", "Prestado", "Mantenimiento" })
+                {
+                    <option value="@e" selected="@(Model.Estado == e)">@e</option>
+                }
+            </select>
+        </div>
+    }
+    <div class="col-md-3">
+        <button class="btn btn-secondary" type="submit">Filtrar</button>
+        <a class="btn btn-link" asp-action="Index">Limpiar</a>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Estado</th>@if (esAdmin){<th></th>}</tr>
+    </thead>
+    <tbody>
+    @foreach (var e in Model.Items)
+    {
+        var badge = e.Estado == "Disponible" ? "success" : e.Estado == "Prestado" ? "warning" : "secondary";
+        <tr>
+            <td>@e.CodigoInventario</td>
+            <td>@e.Nombre</td>
+            <td>@e.CategoriaNombre</td>
+            <td><span class="badge bg-@badge">@e.Estado</span></td>
+            @if (esAdmin)
+            {
+                <td>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@e.Id">Editar</a>
+                    <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@e.Id">Eliminar</a>
+                </td>
+            }
+        </tr>
+    }
+    @if (!Model.Items.Any())
+    {
+        <tr><td colspan="5" class="text-center text-muted">No hay equipos.</td></tr>
+    }
+    </tbody>
+</table>
+
+@if (Model.TotalPaginas > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (var p = 1; p <= Model.TotalPaginas; p++)
+            {
+                <li class="page-item @(p == Model.Pagina ? "active" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pagina="@p" asp-route-texto="@Model.Texto"
+                       asp-route-categoriaId="@Model.CategoriaId" asp-route-estado="@Model.Estado">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

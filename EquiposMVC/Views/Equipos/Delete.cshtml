@@ -1,0 +1,10 @@
+@model EquiposMVC.Models.EquipoDetalle
+@{ ViewData["Title"] = "Eliminar equipo"; }
+<h2>Eliminar equipo</h2>
+<div asp-validation-summary="All" class="text-danger"></div>
+<p>¿Seguro que deseas eliminar <strong>@Model.Nombre</strong> (@Model.CodigoInventario)?</p>
+<form asp-action="Delete" method="post">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <button class="btn btn-danger" type="submit">Eliminar</button>
+    <a class="btn btn-secondary" asp-action="Index">Cancelar</a>
+</form>

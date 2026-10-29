@@ -1,0 +1,19 @@
+@model EquiposMVC.Models.EquipoFormViewModel
+@{ ViewData["Title"] = "Editar equipo"; }
+<h2>Editar equipo</h2>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+    <partial name="_EquipoForm" model="Model" />
+    <div class="mb-3">
+        <label asp-for="Estado" class="form-label"></label>
+        <select asp-for="Estado" class="form-select">
+            <option value="Disponible">Disponible</option>
+            <option value="Prestado">Prestado</option>
+            <option value="Mantenimiento">Mantenimiento</option>
+        </select>
+    </div>
+    <button class="btn btn-primary" type="submit">Guardar</button>
+    <a class="btn btn-secondary" asp-action="Index">Cancelar</a>
+    <a class="btn btn-link" asp-action="Edit" asp-route-id="@Model.Id">Recargar datos</a>
+</form>

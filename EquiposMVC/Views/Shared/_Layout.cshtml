@@ -1,0 +1,54 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    var rol = Context.Session.GetString("Rol");
+    var usuario = Context.Session.GetString("Username");
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Equipos</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+            <div class="container">
+                <span class="navbar-brand">Equipos de Laboratorio</span>
+                <ul class="navbar-nav me-auto">
+                    @if (rol == "Estudiante")
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Equipos" asp-action="Index">Equipos disponibles</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Prestamos" asp-action="Index">Mis préstamos</a></li>
+                    }
+                    else if (rol == "Docente")
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Equipos" asp-action="Index">Equipos</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Prestamos" asp-action="Index">Préstamos</a></li>
+                    }
+                    else if (rol == "Admin")
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Equipos" asp-action="Index">Equipos</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Categorias" asp-action="Index">Categorías</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Prestamos" asp-action="Index">Préstamos</a></li>
+                    }
+                </ul>
+                @if (rol != null)
+                {
+                    <span class="navbar-text me-3">@usuario (@rol)</span>
+                    <a class="btn btn-outline-light btn-sm" asp-controller="Auth" asp-action="Logout">Cerrar sesión</a>
+                }
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">@RenderBody()</main>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

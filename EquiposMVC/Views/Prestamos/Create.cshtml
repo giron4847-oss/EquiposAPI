@@ -1,0 +1,30 @@
+﻿@model EquiposMVC.Models.PrestamoFormViewModel
+@{
+    ViewData["Title"] = "Nuevo préstamo";
+}
+
+<h2>Nuevo préstamo</h2>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="EquipoId" class="form-label">Equipo disponible</label>
+        <select asp-for="EquipoId" asp-items="Model.Equipos" class="form-select">
+            <option value="0">-- Selecciona --</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="UsuarioId" class="form-label">Id del usuario que se lleva el equipo</label>
+        <input asp-for="UsuarioId" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="FechaVencimiento" class="form-label">Fecha de vencimiento (máximo 7 días)</label>
+        <input asp-for="FechaVencimiento" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Observaciones" class="form-label">Observaciones</label>
+        <textarea asp-for="Observaciones" class="form-control"></textarea>
+    </div>
+    <button class="btn btn-primary">Registrar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

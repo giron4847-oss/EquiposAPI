@@ -23,4 +23,15 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+	<ItemGroup>
+		<Compile Remove="EquiposMVC\**" />
+		<Compile Remove="EquiposReportes\**" />
+		<Content Remove="EquiposMVC\**" />
+		<Content Remove="EquiposReportes\**" />
+		<EmbeddedResource Remove="EquiposMVC\**" />
+		<EmbeddedResource Remove="EquiposReportes\**" />
+		<None Remove="EquiposMVC\**" />
+		<None Remove="EquiposReportes\**" />
+	</ItemGroup>
+
 </Project>
