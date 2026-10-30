@@ -237,7 +237,7 @@ Los endpoints protegidos requieren el encabezado `Authorization: Bearer TOKEN_JW
 
 Las capturas están en `docs/evidencias/`. Los casos 1 al 11 se probaron con Swagger o con el cliente MVC; el caso 12 compara los reportes con consultas en SSMS.
 
-| N° | Caso | Esperado | Obtenido | Evidencia |
+| N° | Caso | Esperado | Obtenido |
 |---|---|---|---|---|
 | 1 | Login correcto devuelve token con rol | 200 con token y rol | 200, `rol: Admin` | 
 | 2 | Login con contraseña incorrecta | 401 | 401 "Usuario o contraseña incorrectos." | 
