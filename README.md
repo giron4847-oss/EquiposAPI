@@ -1,18 +1,32 @@
 # Sistema de Préstamo de Equipos de Laboratorio
 
-Aplicación desarrollada con **.NET 8**, compuesta por una API REST y un cliente web MVC para administrar equipos de laboratorio, categorías y préstamos.
+Aplicación desarrollada con **.NET 8** para administrar equipos de laboratorio, categorías y préstamos. Se compone de tres soluciones que comparten una sola base de datos SQL Server (`EquiposDb`):
 
-> **Estado del repositorio:** actualmente contiene los proyectos `EquiposAPI` y `EquiposMVC`. 
+| Proyecto | Descripción | Dirección local |
+|---|---|---|
+| `EquiposAPI` | Web API REST (EF Core código primero, JWT, Swagger) | https://localhost:7207/swagger |
+| `EquiposMVC` | Cliente MVC de operación; consume la API, no accede a la base | https://localhost:7032 |
+| `EquiposReportes` | Reportes de solo lectura (base de datos primero), solo rol Admin | https://localhost:7295 |
 
-Para hacer que funcione el programa se le da clic izq. a configuracion de **Proyecto o perfil de Inicio**
-Luego se le da al boton **Varios proyectos de inicio**
-En proyecto aparecera `EquiposAPI` y `EquiposMVC`en accion seleccione **Iniciar sin depurar**
-Luego a aplicar y aceptar, se le da ctrl + shift + B y luego darle al boton Iniciar sin depurar (Deberan aparecer 2 ventanas de `EquiposAPI` y `EquiposMVC`)
+> Toda escritura pasa por la API. `EquiposReportes` solo lee, con un usuario SQL que tiene únicamente `db_datareader`.
 
 ---
-## Descripción
 
-El sistema permite gestionar el inventario de equipos de laboratorio y controlar el proceso de préstamo y devolución. La API expone los servicios REST y se encarga del acceso a SQL Server. El cliente MVC consume la API mediante solicitudes HTTP; no accede directamente a la base de datos.
+## Contenido
+
+- [Tecnologías](#tecnologías)
+- [Estructura del repositorio](#estructura-del-repositorio)
+- [Funcionalidades](#funcionalidades)
+- [Roles y permisos](#roles-y-permisos)
+- [Requisitos previos](#requisitos-previos)
+- [Configuración e instalación](#configuración-e-instalación)
+- [Ejecución](#ejecución)
+- [Endpoints principales](#endpoints-principales)
+- [Reglas de negocio](#reglas-de-negocio)
+- [Pruebas documentadas (12 casos)](#pruebas-documentadas-12-casos)
+- [Notas](#notas)
+
+---
 
 ## Tecnologías
 
@@ -20,13 +34,13 @@ El sistema permite gestionar el inventario de equipos de laboratorio y controlar
 |---|---|
 | C# y .NET 8 | Desarrollo de la aplicación |
 | ASP.NET Core Web API | Servicios REST |
-| ASP.NET Core MVC | Interfaz web |
-| Entity Framework Core | Acceso a datos y migraciones |
+| ASP.NET Core MVC | Interfaz web (operación y reportes) |
+| Entity Framework Core 8 | Código primero con migraciones (API) y base de datos primero con `Scaffold-DbContext` (Reportes) |
 | SQL Server | Base de datos |
 | JWT Bearer | Autenticación de la API |
 | Swagger / OpenAPI | Documentación y prueba de endpoints |
 | AutoMapper | Mapeo entre entidades y DTOs |
-| Bootstrap | Estilos de la interfaz MVC |
+| Bootstrap | Estilos de la interfaz |
 
 ---
 
@@ -41,73 +55,82 @@ EquiposAPI/
 ├── Migrations/               # Migraciones de la base de datos
 ├── Models/                   # Entidades y enumeraciones
 ├── EquiposMVC/
-│   ├── Controllers/          # Controladores MVC
-│   ├── Infraestructura/      # Cliente HTTP, sesión y manejo de JWT
+│   ├── Controllers/          # Un controlador por recurso
+│   ├── Infraestructura/      # ApiClient, handler del JWT, filtros y atributos
 │   ├── Models/               # Modelos de las vistas
-│   ├── Services/              # Servicios que consumen la API
-│   ├── Views/                 # Vistas Razor
-│   └── wwwroot/               # Archivos estáticos
-├── equipos.sql                # Script SQL generado para el esquema
+│   ├── Services/             # Un servicio por recurso (equipos, categorías, préstamos, autenticación)
+│   └── Views/                # Vistas Razor
+├── EquiposReportes/
+│   ├── Controllers/          # Login y reportes
+│   ├── Data/                 # Contexto y entidades generadas con Scaffold-DbContext
+│   ├── Infrastructure/       # Filtro de acceso solo Admin
+│   ├── Models/               # ViewModels de los reportes
+│   ├── Services/             # Servicio de autenticación contra la API
+│   ├── Views/                # Vistas Razor
+│   └── crear_usuario_reportes.sql   # Crea el usuario SQL de solo lectura
+├── docs/evidencias/          # Capturas de los 12 casos de prueba
+├── equipos.sql               # Script SQL generado a partir de las migraciones
 ├── EquiposAPI.csproj
 ├── EquiposAPI.slnx
 └── README.md
 ```
 
-## Funcionalidades implementadas
+---
+
+## Funcionalidades
 
 ### API (`EquiposAPI`)
-
-- Inicio de sesión y generación de token JWT.
-- Registro de usuarios, restringido al rol Administrador.
-- Consulta de equipos con filtros por texto, categoría y estado.
-- Consulta, creación, actualización y eliminación de equipos.
-- Consulta, creación, actualización y eliminación de categorías.
-- Consulta de préstamos y consulta de un préstamo por identificador.
-- Registro de préstamos y devolución de equipos.
-- Documentación de endpoints mediante Swagger en entorno de desarrollo.
+- Inicio de sesión y generación de token JWT (con Id y rol como claims, expira en 2 horas).
+- Registro de usuarios, solo para Admin (Username repetido devuelve 409).
+- Equipos: listado con filtros (`texto`, `categoriaId`, `estado`), detalle, crear, actualizar y eliminar.
+- Categorías: listado, detalle, crear, actualizar y eliminar.
+- Préstamos: listado según el rol del token, detalle, registro y devolución.
+- Concurrencia optimista con `RowVersion` en los equipos.
+- Documentación con Swagger.
 
 ### Cliente web (`EquiposMVC`)
+- Inicio y cierre de sesión; token, rol y usuario guardados en `Session`.
+- El token se envía en cada solicitud mediante un `DelegatingHandler`.
+- Menú que depende del rol.
+- Equipos con filtros (texto, categoría y estado) y paginación de 10 registros.
+- CRUD de equipos y categorías, y gestión de préstamos y devoluciones.
+- Manejo de errores HTTP: 401 (limpia sesión y vuelve al login), 403 (vista de acceso denegado), 409 (mensaje de la API dentro del formulario sin perder lo escrito) y 5xx (mensaje genérico).
+- La edición de equipos envía el `RowVersion` de vuelta a la API.
 
-- Inicio y cierre de sesión.
-- Consumo de la API mediante un cliente HTTP configurado.
-- Envío del token JWT en las solicitudes autenticadas.
-- Listado de equipos con búsqueda, filtros y paginación.
-- Formularios para crear, editar y eliminar equipos.
-- Listado y mantenimiento de categorías.
-- Consulta de préstamos, filtro de préstamos vencidos, registro de préstamos y devolución.
-- Restricción de opciones de la interfaz según el rol del usuario.
+### Reportes (`EquiposReportes`)
+- Inicio de sesión contra `/api/auth/login`; solo se permite el rol Admin.
+- Cuatro reportes con LINQ, `AsNoTracking()` y ViewModels:
+  1. Inventario por categoría (cantidad por estado).
+  2. Préstamos vencidos (con usuario y días de atraso).
+  3. Top 5 de equipos más prestados.
+  4. Historial por usuario.
+- Filtros por rango de fechas y categoría.
 
 ---
 
 ## Roles y permisos
 
-Los permisos se validan en la API y también se consideran en la interfaz MVC.
+Los permisos se validan en la API y también se reflejan en la interfaz MVC.
 
 | Funcionalidad | Admin | Docente | Estudiante |
 |---|:---:|:---:|:---:|
-| Consultar equipos | Sí | Sí | Sí, solo disponibles |
-| Crear, editar y eliminar equipos | Sí | No | No |
-| Consultar categorías | Sí | No | No |
-| Crear, editar y eliminar categorías | Sí | No | No |
-| Consultar préstamos | Todos | Todos | Solo los propios |
-| Registrar préstamos | Sí | Sí | No |
-| Registrar devoluciones | Sí | Sí | No |
+| CRUD de categorías y equipos | Sí | No | No |
+| Consultar categorías (para filtros) | Sí | Sí | Sí |
 | Registrar usuarios | Sí | No | No |
+| Registrar préstamos y devoluciones | Sí | Sí | No |
+| Ver equipos disponibles | Sí | Sí | Sí |
+| Ver préstamos | Todos | Todos | Solo los propios |
+| Reportes | Sí | No | No |
 
 ---
 
 ## Requisitos previos
 
-- Visual Studio 2022 con soporte para ASP.NET y desarrollo web, o .NET SDK 8.
-- SQL Server (por ejemplo, SQL Server Express).
-- SQL Server Management Studio (SSMS), si se utilizará el script SQL.
-- Entity Framework Core CLI (`dotnet-ef`) para aplicar migraciones desde la terminal.
-
-Verifica la instalación del SDK:
-
-```bash
-dotnet --version
-```
+- .NET SDK 8.0 (`dotnet --version`).
+- Visual Studio 2022 con soporte para ASP.NET, o la CLI de .NET.
+- SQL Server (por ejemplo SQL Server Express, instancia `.\SQLEXPRESS`) con autenticación en **modo mixto** (necesario para el usuario `reportes`).
+- SQL Server Management Studio (SSMS), si se usará el script SQL.
+- `dotnet-ef` si se aplican las migraciones desde la terminal.
 
 ---
 
@@ -120,38 +143,25 @@ git clone URL_DEL_REPOSITORIO
 cd EquiposAPI
 ```
 
-Reemplaza `URL_DEL_REPOSITORIO` por la dirección HTTPS o SSH de tu repositorio de GitHub.
-
 ### 2. Crear la base de datos
 
-La aplicación utiliza SQL Server y la cadena de conexión se configura mediante User Secrets en el proyecto de la API.
-
-Desde la carpeta donde se encuentra `EquiposAPI.csproj`, configura la conexión. Ajusta el servidor y la instancia según tu instalación:
+Configurar la cadena de conexión de la API (desde la carpeta de `EquiposAPI.csproj`):
 
 ```bash
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=.\\SQLEXPRESS;Database=EquiposDb;Trusted_Connection=True;TrustServerCertificate=True;"
 ```
 
-Para crear las tablas, se puede utilizar una de estas opciones:
+Crear las tablas con una de estas opciones:
 
-**Opción A: aplicar las migraciones**
+- **Opción A (migraciones):** `dotnet ef database update`
+- **Opción B (script):** abrir `equipos.sql` en SSMS y ejecutarlo sobre la instancia.
 
-```bash
-dotnet ef database update
-```
+La base se crea con cuatro categorías semilla (Laptops, Proyectores, Kits IoT y Tarjetas Arduino).
 
-**Opción B: utilizar el script SQL**
-
-Abrir `equipos.sql` desde SQL Server Management Studio y ejecutarlo en la instancia correspondiente.
-
-### 3. Configurar JWT y el usuario administrador inicial
-
-La API necesita una clave JWT y los datos que utilizará para crear el primer usuario administrador cuando la tabla `Usuarios` esté vacía.
-
-Ejecuta estos comandos desde la carpeta del proyecto `EquiposAPI`:
+### 3. Configurar JWT y el administrador inicial (User Secrets de la API)
 
 ```bash
-dotnet user-secrets set "Jwt:Key" "REEMPLAZAR_POR_UNA_CLAVE_SEGURA_DE_AL_MENOS_32_CARACTERES"
+dotnet user-secrets set "Jwt:Key" "REEMPLAZAR_POR_UNA_CLAVE_DE_AL_MENOS_32_CARACTERES"
 dotnet user-secrets set "Jwt:Issuer" "EquiposAPI"
 dotnet user-secrets set "Jwt:Audience" "EquiposAPIUsuarios"
 
@@ -160,114 +170,92 @@ dotnet user-secrets set "AdminSeed:Email" "admin@equipos.local"
 dotnet user-secrets set "AdminSeed:Password" "REEMPLAZAR_POR_UNA_CONTRASENA_SEGURA"
 ```
 
-Utiliza valores propios para la clave y la contraseña. **No publiques contraseñas, claves JWT ni cadenas de conexión con credenciales en GitHub.**
+El administrador se crea automáticamente al iniciar la API solo si la tabla `Usuarios` está vacía. **No se publican contraseñas ni claves en el repositorio.**
 
-El usuario administrador se crea automáticamente al iniciar la API únicamente si la tabla `Usuarios` no contiene registros.
+### 4. Crear el usuario de solo lectura para reportes
 
-### 4. Configurar la dirección de la API en MVC
+Abrir `EquiposReportes/crear_usuario_reportes.sql` en SSMS, cambiar la contraseña y ejecutarlo. Crea el login y el usuario `reportes` con el rol `db_datareader` únicamente.
 
-El cliente MVC obtiene la dirección de la API desde:
+Luego, desde la carpeta de `EquiposReportes.csproj`:
 
-`EquiposMVC/appsettings.json`
-
-Configuración actual del proyecto:
-
-```json
-{
-  "ApiSettings": {
-    "BaseUrl": "https://localhost:7207/"
-  }
-}
+```bash
+dotnet user-secrets set "ConnectionStrings:ReportesConnection" "Server=.\\SQLEXPRESS;Database=EquiposDb;User Id=reportes;Password=CONTRASENA_DEL_USUARIO_REPORTES;TrustServerCertificate=True;"
 ```
 
-Si la API utiliza otro puerto en tu equipo, actualiza `BaseUrl` para que coincida con la dirección HTTPS de la API.
+### 5. Dirección de la API en MVC y Reportes
+
+Ambos proyectos leen la URL de la API de `appsettings.json` (`ApiSettings:BaseUrl`, por defecto `https://localhost:7207/`). Si la API usa otro puerto, actualizar ese valor.
 
 ---
 
 ## Ejecución
 
-La solución se encuentra en `EquiposAPI.slnx` y contiene dos proyectos.
+1. Compilar la solución (`Ctrl + Shift + B`).
+2. Iniciar **`EquiposAPI`** con *Iniciar sin depurar* y comprobar que Swagger abra.
+3. Iniciar **`EquiposMVC`** y/o **`EquiposReportes`** con *Iniciar sin depurar*, con la API en ejecución.
+4. Iniciar sesión con el administrador definido en `AdminSeed`.
 
-### Desde Visual Studio
+Si el navegador pide confiar en el certificado de desarrollo: `dotnet dev-certs https --trust`.
 
-1. Abrir `EquiposAPI.slnx`.
-2. Compilar la solución con **Compilar > Compilar solución** o `Ctrl + Shift + B`.
-3. Iniciar primero el proyecto `EquiposAPI` con **Iniciar sin depurar**.
-4. Comprobar que Swagger se abra correctamente.
-5. Mantener la API en ejecución.
-6. Iniciar después el proyecto `EquiposMVC` con **Iniciar sin depurar**.
-7. Iniciar sesión desde la pantalla del cliente MVC con un usuario registrado.
-
-### Direcciones configuradas en el proyecto
-
-| Proyecto | Dirección local |
-|---|---|
-| API / Swagger | `https://localhost:7207/swagger` |
-| Cliente MVC | `https://localhost:7032` |
-
-Los puertos corresponden a los perfiles HTTPS configurados en `launchSettings.json`; pueden variar si se modifican los perfiles de ejecución.
+Los usuarios Docente y Estudiante se crean con `POST /api/Auth/register` autenticado como Admin.
 
 ---
 
 ## Endpoints principales
 
-Las rutas están definidas en los controladores de `EquiposAPI`.
-
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
 | POST | `/api/Auth/login` | Iniciar sesión y obtener JWT | Público |
 | POST | `/api/Auth/register` | Registrar un usuario | Admin |
-| GET | `/api/Equipos` | Listar equipos y aplicar filtros | Autenticado |
-| GET | `/api/Equipos/{id}` | Consultar un equipo | Autenticado |
-| POST | `/api/Equipos` | Crear un equipo | Admin |
-| PUT | `/api/Equipos/{id}` | Actualizar un equipo | Admin |
-| DELETE | `/api/Equipos/{id}` | Eliminar un equipo | Admin |
 | GET | `/api/Categorias` | Listar categorías | Autenticado |
 | GET | `/api/Categorias/{id}` | Consultar una categoría | Autenticado |
-| POST | `/api/Categorias` | Crear una categoría | Admin |
-| PUT | `/api/Categorias/{id}` | Actualizar una categoría | Admin |
-| DELETE | `/api/Categorias/{id}` | Eliminar una categoría | Admin |
-| GET | `/api/Prestamos` | Listar préstamos | Autenticado |
-| GET | `/api/Prestamos/{id}` | Consultar un préstamo | Autenticado |
+| POST / PUT / DELETE | `/api/Categorias` | Mantenimiento de categorías | Admin |
+| GET | `/api/Equipos?texto=&categoriaId=&estado=` | Listar equipos con filtros | Autenticado |
+| GET | `/api/Equipos/{id}` | Detalle de un equipo | Autenticado |
+| POST / PUT / DELETE | `/api/Equipos` | Mantenimiento de equipos | Admin |
 | POST | `/api/Prestamos` | Registrar un préstamo | Admin / Docente |
 | PUT | `/api/Prestamos/{id}/devolucion` | Registrar una devolución | Admin / Docente |
+| GET | `/api/Prestamos?soloVencidos=true` | Listar préstamos según el rol del token | Autenticado |
 
-### Filtros disponibles
-
-- Equipos: `texto`, `categoriaId` y `estado`.
-- Préstamos: `soloVencidos`.
-
-Ejemplos:
-
-```http
-GET /api/Equipos?texto=laptop
-GET /api/Equipos?categoriaId=1
-GET /api/Equipos?estado=Disponible
-GET /api/Prestamos?soloVencidos=true
-```
-
-Los endpoints protegidos requieren enviar el token obtenido en el login mediante el encabezado:
-
-```http
-Authorization: Bearer TOKEN_JWT
-```
+Los endpoints protegidos requieren el encabezado `Authorization: Bearer TOKEN_JWT`.
 
 ---
+
 ## Reglas de negocio
-De acuerdo con las validaciones implementadas en los controladores:
-- Solo se puede prestar un equipo cuyo estado sea `Disponible`.
-- Al registrar un préstamo, el equipo cambia a estado `Prestado`.
-- La fecha de vencimiento no puede ser anterior al día actual ni superar siete días desde la fecha del préstamo.
-- Al registrar una devolución, se completa la fecha de devolución y el equipo vuelve a estado `Disponible`.
-- No se permite eliminar una categoría que tenga equipos asociados.
-- No se permite eliminar un equipo que tenga historial de préstamos.
-- Se utiliza `RowVersion` para el control de concurrencia en la actualización de equipos.
 
-### Estados de los equipos
+- Solo se puede prestar un equipo `Disponible`; si no, la API responde **409**.
+- Al registrar un préstamo, el equipo pasa a `Prestado` en el mismo `SaveChanges` (transaccional).
+- La fecha de vencimiento no puede ser anterior a hoy ni mayor a 7 días.
+- Al registrar una devolución se completa `FechaDevolucion` y el equipo vuelve a `Disponible`.
+- No se puede eliminar un equipo con historial de préstamos (**409**) ni una categoría con equipos.
+- `RowVersion` controla la concurrencia al actualizar equipos (la segunda edición recibe **409**).
+- Todas las relaciones usan `DeleteBehavior.Restrict`.
 
-| Estado | Descripción |
-|---|---|
-| `Disponible` | El equipo puede ser prestado |
-| `Prestado` | El equipo tiene un préstamo activo |
-| `Mantenimiento` | El equipo se encuentra en mantenimiento |
 ---
+
+## Pruebas documentadas (12 casos)
+
+Las capturas están en `docs/evidencias/`. Los casos 1 al 11 se probaron con Swagger o con el cliente MVC; el caso 12 compara los reportes con consultas en SSMS.
+
+| N° | Caso | Esperado | Obtenido | Evidencia |
+|---|---|---|---|---|
+| 1 | Login correcto devuelve token con rol | 200 con token y rol | 200, `rol: Admin` | 
+| 2 | Login con contraseña incorrecta | 401 | 401 "Usuario o contraseña incorrectos." | 
+| 3 | Endpoint protegido sin token | 401 | 401 | 
+| 4 | Estudiante intenta crear un equipo | 403 | 403 | 
+| 5 | Registrar usuario con Username repetido | 409 | 409 "El nombre de usuario ya existe." | 
+| 6 | Prestar un equipo ya Prestado | 409 | 409 "El equipo no está disponible (estado actual: Prestado)." | 
+| 7 | FechaVencimiento a 15 días | Rechazada | Mensaje "no puede ser mayor a 7 días" | 
+| 8 | Eliminar equipo con historial | 409 | 409 "No se puede eliminar un equipo con historial de préstamos." | 
+| 9 | Dos ediciones simultáneas del mismo equipo | La segunda devuelve 409 | Mensaje de conflicto en el formulario, sin perder lo escrito |
+| 10 | Estudiante solo ve sus préstamos | Solo los propios | Cada estudiante ve únicamente su préstamo | 
+| 11 | Token expirado en MVC redirige al login | Login con aviso de sesión expirada | Aviso "Tu sesión expiró..." | 
+| 12 | Los cuatro reportes coinciden con SSMS | Datos coherentes | Inventario, Vencidos, Top 5 e Historial coinciden con las consultas | 
+
+---
+
+## Notas
+
+- Las credenciales y claves se guardan en User Secrets y nunca en el repositorio.
+- `EquiposMVC` y `EquiposReportes` no escriben en la base de datos: toda escritura pasa por la API, y Reportes usa un usuario `db_datareader`.
+- Las capturas deben corresponder al funcionamiento real de la aplicación y no mostrar contraseñas ni tokens.
