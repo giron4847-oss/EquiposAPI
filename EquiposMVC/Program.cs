@@ -23,6 +23,7 @@ builder.Services.AddScoped<ApiClient>();
 builder.Services.AddScoped<PrestamosService>();
 builder.Services.AddScoped<EquiposService>();
 builder.Services.AddScoped<CategoriasService>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 

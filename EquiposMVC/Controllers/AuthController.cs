@@ -1,13 +1,14 @@
-﻿using EquiposMVC.Infrastructure;
+using EquiposMVC.Infrastructure;
 using EquiposMVC.Models;
+using EquiposMVC.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EquiposMVC.Controllers;
 
 public class AuthController : Controller
 {
-    private readonly ApiClient _api;
-    public AuthController(ApiClient api) => _api = api;
+    private readonly AuthService _auth;
+    public AuthController(AuthService auth) => _auth = auth;
 
     [HttpGet]
     public IActionResult Login(bool expirada = false)
@@ -23,8 +24,8 @@ public class AuthController : Controller
 
         try
         {
-            var r = await _api.PostAsync<LoginResponse>("api/Auth/login", model);
-            HttpContext.Session.SetString("Token", r!.Token);
+            var r = await _auth.LoginAsync(model);
+            HttpContext.Session.SetString("Token", r.Token);
             HttpContext.Session.SetString("Rol", r.Rol);
             HttpContext.Session.SetString("Username", r.Username);
             return RedirectToAction("Index", "Equipos");
