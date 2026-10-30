@@ -1,0 +1,17 @@
+@model EquiposReportes.Models.ReporteViewModel<EquiposReportes.Models.TopEquipoVM>
+@{ ViewData["Title"] = "Top 5 equipos";
+   ViewData["Categorias"] = Model.Categorias; ViewData["ConFechas"] = true; ViewData["ConCategoria"] = true; ViewData["ConUsuario"] = false; }
+<h2>Top 5 equipos más prestados</h2>
+<p class="text-muted">Filtro de fechas: sobre la fecha del préstamo.</p>
+<partial name="_Filtros" model="Model.Filtro" view-data="ViewData" />
+<table class="table table-striped">
+    <thead><tr><th>#</th><th>Código</th><th>Equipo</th><th>Préstamos</th></tr></thead>
+    <tbody>
+    @{ var i = 1; }
+    @foreach (var r in Model.Datos)
+    {
+        <tr><td>@(i++)</td><td>@r.Codigo</td><td>@r.Equipo</td><td>@r.Prestamos</td></tr>
+    }
+    @if (!Model.Datos.Any()) { <tr><td colspan="4" class="text-muted text-center">Sin datos.</td></tr> }
+    </tbody>
+</table>

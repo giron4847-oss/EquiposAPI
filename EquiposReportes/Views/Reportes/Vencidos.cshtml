@@ -1,0 +1,16 @@
+@model EquiposReportes.Models.ReporteViewModel<EquiposReportes.Models.PrestamoVencidoVM>
+@{ ViewData["Title"] = "Préstamos vencidos";
+   ViewData["Categorias"] = Model.Categorias; ViewData["ConFechas"] = true; ViewData["ConCategoria"] = true; ViewData["ConUsuario"] = false; }
+<h2>Préstamos vencidos</h2>
+<p class="text-muted">Filtro de fechas: sobre la fecha de vencimiento.</p>
+<partial name="_Filtros" model="Model.Filtro" view-data="ViewData" />
+<table class="table table-striped">
+    <thead><tr><th>Usuario</th><th>Código</th><th>Equipo</th><th>Vencía</th><th>Días de atraso</th></tr></thead>
+    <tbody>
+    @foreach (var r in Model.Datos)
+    {
+        <tr><td>@r.Username</td><td>@r.Codigo</td><td>@r.Equipo</td><td>@r.FechaVencimiento.ToString("dd/MM/yyyy")</td><td>@r.DiasAtraso</td></tr>
+    }
+    @if (!Model.Datos.Any()) { <tr><td colspan="5" class="text-muted text-center">Sin préstamos vencidos.</td></tr> }
+    </tbody>
+</table>

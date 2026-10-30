@@ -1,0 +1,20 @@
+@model EquiposReportes.Models.ReporteViewModel<EquiposReportes.Models.HistorialUsuarioVM>
+@{ ViewData["Title"] = "Historial por usuario";
+   ViewData["Categorias"] = Model.Categorias; ViewData["ConFechas"] = true; ViewData["ConCategoria"] = false; ViewData["ConUsuario"] = true; }
+<h2>Historial por usuario</h2>
+<partial name="_Filtros" model="Model.Filtro" view-data="ViewData" />
+<table class="table table-striped">
+    <thead><tr><th>Usuario</th><th>Código</th><th>Equipo</th><th>Préstamo</th><th>Vence</th><th>Devolución</th></tr></thead>
+    <tbody>
+    @foreach (var r in Model.Datos)
+    {
+        <tr>
+            <td>@r.Username</td><td>@r.Codigo</td><td>@r.Equipo</td>
+            <td>@r.FechaPrestamo.ToString("dd/MM/yyyy")</td>
+            <td>@r.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+            <td>@(r.FechaDevolucion?.ToString("dd/MM/yyyy") ?? "Pendiente")</td>
+        </tr>
+    }
+    @if (!Model.Datos.Any()) { <tr><td colspan="6" class="text-muted text-center">Escribe un Username y filtra.</td></tr> }
+    </tbody>
+</table>

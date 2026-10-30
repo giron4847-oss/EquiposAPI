@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="EquiposAPI.csproj" />
   <Project Path="EquiposMVC/EquiposMVC.csproj" Id="647b7a15-8248-415b-ba8c-91962b164e4a" />
+  <Project Path="EquiposReportes/EquiposReportes.csproj" />
 </Solution>

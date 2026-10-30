@@ -1,0 +1,13 @@
+PASOS (ver el chat). Resumen:
+1) SSMS: ejecutar crear_usuario_reportes.sql
+2) VS: Nuevo proyecto > Aplicacion web ASP.NET Core (MVC) .NET 8, nombre EquiposReportes,
+   ubicacion C:\Users\Yaneth\Downloads\EquiposAPI  (misma carpeta del repo, como EquiposMVC)
+3) Copiar estos archivos encima (reemplazar Program.cs, appsettings.json, Views/Shared/_Layout.cshtml)
+4) Consola de paquetes (proyecto predeterminado EquiposReportes):
+   Install-Package Microsoft.EntityFrameworkCore.SqlServer -Version 8.0.5
+   Install-Package Microsoft.EntityFrameworkCore.Design -Version 8.0.5
+   Install-Package Microsoft.EntityFrameworkCore.Tools -Version 8.0.5
+5) Scaffold (una sola linea; se ejecuta con tu usuario de Windows, NO con reportes):
+   Scaffold-Dbcontext "Server=.\SQLEXPRESS;Database=EquiposDb;Trusted_Connection=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Data -Context EquiposDbContext -ContextNamespace EquiposReportes.Data -Namespace EquiposReportes.Data -Force
+6) User Secrets: clic derecho proyecto > Administrar secretos de usuario:
+   { "ConnectionStrings": { "ReportesConnection": "Server=.\\SQLEXPRESS;Database=EquiposDb;User Id=reportes;Password=TU_CLAVE;TrustServerCertificate=True;" } }

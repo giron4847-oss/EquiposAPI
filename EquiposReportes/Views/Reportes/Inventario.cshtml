@@ -1,0 +1,15 @@
+@model EquiposReportes.Models.ReporteViewModel<EquiposReportes.Models.InventarioCategoriaVM>
+@{ ViewData["Title"] = "Inventario por categoría";
+   ViewData["Categorias"] = Model.Categorias; ViewData["ConFechas"] = false; ViewData["ConCategoria"] = true; ViewData["ConUsuario"] = false; }
+<h2>Inventario por categoría</h2>
+<partial name="_Filtros" model="Model.Filtro" view-data="ViewData" />
+<table class="table table-striped">
+    <thead><tr><th>Categoría</th><th>Total</th><th>Disponibles</th><th>Prestados</th><th>Mantenimiento</th></tr></thead>
+    <tbody>
+    @foreach (var r in Model.Datos)
+    {
+        <tr><td>@r.Categoria</td><td>@r.Total</td><td>@r.Disponibles</td><td>@r.Prestados</td><td>@r.Mantenimiento</td></tr>
+    }
+    @if (!Model.Datos.Any()) { <tr><td colspan="5" class="text-muted text-center">Sin datos.</td></tr> }
+    </tbody>
+</table>
