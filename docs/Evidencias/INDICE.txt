@@ -1,0 +1,16 @@
+Evidencias en orden (nombre del archivo = caso del parcial)
+
+caso-01  Login correcto devuelve token con rol (el token y la contrasena estan tapados)
+caso-02  Login con contrasena incorrecta -> 401
+caso-03  Endpoint protegido sin token -> 401
+caso-04  Estudiante intenta crear un equipo -> 403
+caso-05  Registrar usuario con Username repetido -> 409
+caso-06  Prestar un equipo ya Prestado -> 409
+caso-07  FechaVencimiento fuera de rango rechazada
+caso-08  Eliminar equipo con historial -> 409
+caso-09  Dos ediciones simultaneas -> 409 en el formulario
+caso-10  Cada estudiante ve solo lo suyo (a, b) y el admin ve todo (c)
+caso-11  Sesion expirada -> login con aviso
+caso-12  Reportes vs SSMS: a inventario, b vencidos, c top 5 (falta captura del reporte Top 5), d historial
+extra-*  Capturas de apoyo (menu por rol, docente sin acceso a reportes)
+
